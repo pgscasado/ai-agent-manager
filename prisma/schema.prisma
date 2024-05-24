@@ -1,0 +1,102 @@
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+generator zod {
+  provider = "zod-prisma-types"
+  output = "../src/types/generated/zod"
+  createOptionalDefaultValuesTypes = true
+}
+
+model Bot {
+  @@map("bot")
+  id                    String    @id @default(auto()) @map("_id") @db.ObjectId
+  identifier            String    @unique
+  accessControl         Boolean   @map("access_control") @default(false)
+  accessControlMessage  String?   @map("access_control_message")
+  userHistoryTime       Int       @map("user_history_time") @default(0)
+  gptLanguageDetector   Boolean   @map("gpt_language_detector") @default(false)
+  hasAttendance         Boolean   @map("has_attendance") @default(true)
+  attendanceOnGreeting  Boolean   @map("allow_attendance_on_greeting") @default(true)
+  directAttendance      Boolean   @map("direct_attendance") @default(false)
+  name                  String    @map("name") @default("New Bot")
+  timestamp             DateTime  @map("timestamp") @default(now())
+  tokenLimit            Int       @map("token_limit") @default(3500)
+  totalTokens           Int       @map("token_count") @default(0)
+  textSearch            Boolean?  @map("text_search") @default(false)
+  trainingInfo          TrainingInfo?   @map("training_info")
+  openaiConfig          OpenAIConfig?   @map("openai_config")
+  jobTimings            JobTimings?     @map("job_timings")
+  disabled              Boolean         @map("disabled") @default(false)
+  startMessage          String?         @map("start_message")
+}
+
+type JobTimings {
+  defaultJobMinutes   Int    @map("default_job_minutes") @default(2)
+}
+
+type TrainingInfo {
+  status          TrainingStatus  @map("status")
+  errorMessages   String[]        @map("error_messages")
+  dataJson        String          @map("data_json")
+  duration        Int             @map("duration") @default(0)
+  timestamp       DateTime        @map("timestamp") @default(now())
+}
+
+enum TrainingStatus {
+  ON_TRAINING
+  FINISHED
+  ERROR
+}
+
+type OpenAIConfig {
+  temperature      Float?                 @map("temperature") @default(0.4)
+  messageBuffer    Int                    @map("message_buffer") @default(5)
+  openaiKey        String                 @map("openai_key")
+  llmModel         String                 @map("llm_model") @default("gpt-3.5-turbo")
+  tempContent      ChatGPTPromptContent   @map("temp_content")
+}
+
+type ChatGPTPromptContent {
+  botName           String    @map("bot_name")
+  sourceText        String    @map("source_text")
+  sourceUrls        String[]  @map("source_urls")
+  sourceFiles       String[]  @map("source_files")
+  behavioralRules   String?   @map("behavioral_rules")
+  language          ChatGPTLanguageConfig? @map("language")
+}
+
+type ChatGPTLanguageConfig {
+  allowedLanguages  String[]  @map("allowed_languages")
+  defaultLanguage   String    @map("default_language")
+}
+
+model Message {
+  @@map("message")
+  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  botId         String    @map("bot_id")
+  message       String    @map("message")
+  userId        String    @map("user_id")
+  isResponse    Boolean   @map("is_response")
+  response      String    @map("response")
+  timestamp     DateTime  @map("timestamp") @default(now())
+  flags         Json      @map("flags") @default("{}")
+}
+
+model ChatGPTCall {
+  @@map("chatgpt_call")
+  id              String    @id @default(auto()) @map("_id") @db.ObjectId
+  botId           String    @map("bot_id")
+  promptTokens    Int       @map("prompt_tokens")
+  responseTokens  Int       @map("response_tokens")
+  totalTokens     Int       @map("total_tokens")
+  apiKeyHint      String    @map("api_key_hint")
+  model           String    @map("model")
+  timestamp       DateTime  @map("timestamp") @default(now())
+  latency         Int       @map("latency")
+}

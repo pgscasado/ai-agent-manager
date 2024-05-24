@@ -1,0 +1,5 @@
+node_modules
+!node_modules/.prisma
+logs/*
+ai-models/sentence_transformers
+ai-models/*.py
